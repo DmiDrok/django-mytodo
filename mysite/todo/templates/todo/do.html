@@ -1,0 +1,16 @@
+{% extends 'todo/base.html' %}
+
+{% block content %}
+
+<div class="do-info">
+    <h3>{{ do.title }}</h3>
+    <br>
+    <h3>{{ do.category }}</h3>
+    <br>
+    {% if do.photo %}
+        <img src="{{ do.photo.url }}" width="200">
+    {% endif %}
+    <p>{{ do.content }}</p>
+</div>
+
+{% endblock %}

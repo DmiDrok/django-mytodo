@@ -1,0 +1,486 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'todo/css/new_styles.css' %}">
+    <link rel="icon" href="{% static 'todo/images/logo.png' %}">
+
+    <title>{{ title }}</title>
+</head>
+
+{{ request.url_name }}
+<body>
+    {% block header %}
+        <header>
+            <div class="burger_menu">
+                <div id="burger">
+                    <i class="burger_line"></i>
+                    <i class="burger_line"></i>
+                    <i class="burger_line"></i>
+                </div>
+            </div>
+
+            <div class="logo_block">
+                <a href="{% url 'index' %}">Todo-шник</a>
+            </div>
+        </header>
+    {% endblock header %}
+
+    {% block sidebar %}
+        <section class="sidebar">
+            <div class="content_menu">
+                <div class="title_sidebar">
+                    <h3>Меню</h3>
+                </div>
+
+                <span id="close">X</span>
+
+                <div class="menu_links_blocks">
+                        <div class="all_system links_block {% if active_category != 'system' %} hidden {% else %} default {% endif %}">
+                            <div class="title_links_block">
+                                <h3>Системные</h3>
+                            </div>
+
+                            <div class="links_here">
+                                {% if not request.user.is_authenticated %}
+                                    {% for m in menu.system %}
+                                        {% if active_path == m.name_path %}
+                                            <a href="{% url m.name_path %}" class="active">{{ m.name_link }}</a>
+                                        {% else %}
+                                            <a href="{% url m.name_path %}">{{ m.name_link }}</a>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    {% for m in menu.profile %}
+                                        {% if active_path == m.name_path %}
+                                            {% if m.name_path == 'profile' %}
+                                                <a href="{% url m.name_path request.user.username %}" class="active">{{ m.name_link }}</a>
+                                            {% else %}
+                                                <a href="{% url m.name_path %}" class="active">{{ m.name_link }}</a>
+                                            {% endif %}
+                                        {% else %}
+                                            {% if m.name_path  == 'profile' %}
+                                                <a href="{% url m.name_path request.user.username %}">{{ m.name_link }}</a>
+                                            {% else %}
+                                                <a href="{% url m.name_path %}">{{ m.name_link }}</a>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    
+                    {% if request.user.is_authenticated %}
+                        <div class="all_pages links_block {% if active_category != 'pages' %} hidden {% else %} default {% endif %}">
+                            <div class="title_links_block">
+                                <h3>Разделы</h3>
+                            </div>
+        
+                            <div class="links_here">
+                                {% for m in menu.pages %}
+                                    {% if active_path == m.name_path %}
+                                        <a href="{% url m.name_path %}" class="active">{{ m.name_link }}</a>
+                                    {% else %}
+                                        <a href="{% url m.name_path %}">{{ m.name_link }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+        
+                        <div class="all_cats links_block {% if active_category != 'cats' %} hidden {% else %} default {% endif %}">
+                            <div class="title_links_block">
+                                <h3>Категории</h3>
+                            </div>
+        
+                            <div class="links_here">
+                                {% for cat in all_cats %}
+                                    {% if active_cat_slug == cat.slug %}
+                                        <a href="{{ cat.get_absolute_url }}" class="active">{{ cat }}</a>
+                                    {% else %}
+                                        <a href="{{ cat.get_absolute_url }}">{{ cat }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+        
+                        <div class="all_others links_block {% if active_category != 'other' %} hidden {% else %} default {% endif %}">
+                            <div class="title_links_block">
+                                <h3>Другое</h3>
+                            </div>
+        
+                            <div class="links_here">
+                                {% for m in menu.other %}
+                                    {% if active_path == m.name_path %}
+                                        <a href="{% url m.name_path %}" class="active">{{ m.name_link }}</a>
+                                    {% else %}
+                                        <a href="{% url m.name_path %}">{{ m.name_link }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    {% endblock sidebar %}
+
+    {% block content %}
+        
+    {% endblock content %}
+
+    <script>
+        let btnsCompleteArr = document.querySelectorAll('.do_complete');
+        let btnsOperCompletedDelete = document.querySelectorAll('.do_tasks #del');
+        let btnsOperCompletedReturn = document.querySelectorAll('.do_tasks #return');
+        let btnsOperCompletedFavourite = document.querySelectorAll('.do_tasks #favourite');
+        let btnsOperCompletedFavouriteDel = document.querySelectorAll('.do_tasks .favourited');
+        let popupSave = document.querySelector(".content_popup");
+        let completed = {
+            'add': [],
+            'del': [],
+            'return': [],
+            'favourite': [],
+            'favourite_del': [],
+            'html': []
+        }; // Список с выполненными заданиями (add) -- его мы будем наполнять; html - список с блоками: html-объектами
+
+        // Функция добавления в completed в add и html
+        function addToCompleted(content, parent) {
+            completed['add'].push(content);
+            completed['html'].push(parent);
+        }
+
+        // Функция добавления в completed в del и html
+        function addToCompletedDel(content, parent) {
+            completed['del'].push(content);
+            completed['html'].push(parent);
+        }
+
+        // Функция добавления в completed в return и html
+        function addToCompletedReturn(content, parent) {
+            completed['return'].push(content);
+            completed['html'].push(parent);
+        }
+
+        // Функция добавления в completed в favourite и html
+        function addToCompletedFavourite(content, parent) {
+            completed['favourite'].push(content);
+            completed['html'].push(parent);
+        }
+
+        // Функция добавления в completed в favourite_del и html
+        function addToCompletedFavouriteDel(content, parent) {
+            completed['favourite_del'].push(content);
+            completed['html'].push(parent);
+        }
+
+        // Функция переключения на статус 'Применено' у попапа с кнопкой сохранения
+        function changePopupToActive() {
+            if (!popupSave.classList.contains('apply')) {
+                popupSave.classList.add('apply');
+            }
+        }
+
+        // Функция переключения на статус 'Применить' (не применено) у попапа с кнопкой сохранения
+        function chagePopupToApply() {
+            if (popupSave.classList.contains('apply')) {
+                popupSave.classList.remove('apply');
+            }
+        }
+
+
+        // Переключатель кнопки 'Выполнить' / 'Выполнено'
+        for (let btn of btnsCompleteArr) {
+            btn.addEventListener('click', function() {
+                parentBlock = btn.closest('.do_block');
+                contentAdd = parentBlock.querySelector('.title_do').textContent; // Этот контент (строку задания) мы будем добавлять в список выполненных
+
+                // Пользователь нажал 'Выполнить'
+                if (!btn.classList.contains('completed')) {
+                    btn.classList.add('completed');
+                    btn.innerHTML = 'Выполнено';
+
+                    addToCompleted(contentAdd, parentBlock); // Добавляем в список выполненных
+                    console.log(completed);
+                    
+                    // Если длина добавляемых заданий больше 0 - то меняем статус попапа на 'Применить'
+                    if (completed['add'].length > 0) {
+                        popupSave.classList.add("show");
+                    }
+                }
+                else { // Пользователь убрал 'Выполнено'
+                    btn.classList.remove('completed');
+                    btn.innerHTML = 'Выполнить';
+
+                    // Если этот контет уже есть в списке выполненного - удаляем
+                    indexContent = completed['add'].indexOf(contentAdd);
+                    indexParent = completed['html'].indexOf(parentBlock);
+                    if (indexContent != -1) {
+                        completed['add'].splice(indexContent, indexContent+1); // Удаляем элемент из списка выполненных
+                        completed['html'].splice(indexParent, indexParent+1); // Удаляем родительский блок этого контента
+                    }
+                    console.log(completed);
+                }
+            })
+        }
+
+
+        // Алгоритм удаления уже выполненных заданий по нажатию кнопки удаления
+        for (let btn of btnsOperCompletedDelete) {
+            btn.addEventListener("click", function() {
+                parentBlock = btn.closest('.do_block');
+                contentDel = parentBlock.querySelector('.title_do').textContent;
+
+                // Пользователь нажал 'удалить'
+                if (!btn.classList.contains('deleted')) {
+                    btn.classList.add('deleted');
+                    btn.innerHTML = 'Удалено';
+
+                    addToCompletedDel(contentDel, parentBlock);
+                    console.log(completed);
+
+                    if (completed['del'].length > 0) {
+                        popupSave.classList.add("show");
+                    }
+                }
+                else { // Пользователь убрал 'удалено'
+                    btn.classList.remove('deleted');
+                    btn.innerHTML = 'Удалить';
+
+                    // Если этот контет уже есть в списке удаляемого - удаляем оттуда
+                    indexContent = completed['del'].indexOf(contentDel);
+                    indexParent = completed['html'].indexOf(parentBlock);
+                    if (indexContent != -1) {
+                        completed['del'].splice(indexContent, indexContent+1); // Удаляем элемент из списка выполненных
+                        completed['html'].splice(indexParent, indexParent+1); // Удаляем родительский блок этого контента
+                    }
+                    console.log(completed);
+                }
+
+            })
+        }
+
+
+        // Алгоритм возвращения уже выполненных заданий в невыполненные по нажатию кнопки возврата
+        for (let btn of btnsOperCompletedReturn) {
+            parentBlock = btn.closest('.do_block');
+            contentReturn = parentBlock.querySelector('.title_do').textContent;
+
+            btn.addEventListener("click", function() {
+                // Пользователь нажал 'вернуть'
+                if (!btn.classList.contains('returned')) {
+                    btn.classList.add('returned');
+                    btn.innerHTML = "Оставить";
+
+                    addToCompletedReturn(contentReturn, parentBlock);
+                    console.log(completed);
+
+                    if (completed['return'].length > 0) {
+                        popupSave.classList.add("show");
+                    }
+                }
+                else { // Пользователь убрал 'вернуть'
+                    btn.classList.remove('returned');
+                    btn.innerHTML = "Вернуть";
+
+                    indexContent = completed['return'].indexOf(contentReturn);
+                    indexParent = completed['html'].indexOf(parentBlock);
+                    if (indexContent != -1) {
+                        completed['return'].splice(indexContent, indexContent+1); // Удаляем элемент из списка выполненных
+                        completed['html'].splice(indexParent, indexParent+1); // Удаляем родительский блок этого контента
+                    }
+                    console.log(completed);
+                }
+            })
+        }
+
+
+        // Алгоритм 'В избранное' / 'В избранном' (добавление в избранное)
+        for (let btn of btnsOperCompletedFavourite) {
+            btn.onclick = () => {
+                parentBlock = btn.closest('.do_block');
+                contentFavourite = parentBlock.querySelector('.title_do').textContent;
+                
+                // Пользователь нажал 'В избранное'
+                if (!btn.classList.contains('favourited')) {
+                    btn.classList.add('favourited');
+                    btn.innerHTML = 'В избранном';
+
+                    addToCompletedFavourite(contentFavourite, parentBlock);
+                    if (completed['favourite'].length > 0) {
+                        popupSave.classList.add("show");
+                    }
+                    console.log(completed);
+                }
+                else { // Пользователь нажал 'В избранном'
+                    btn.classList.remove('favourited');
+                    btn.innerHTML = 'В избранное';
+
+                    indexContent = completed['favourite'].indexOf(contentFavourite);
+                    indexParent = completed['html'].indexOf(parentBlock);
+                    if (indexContent != -1) {
+                        completed['favourite'].splice(indexContent, indexContent+1); // Удаляем элемент из списка выполненных
+                        completed['html'].splice(indexParent, indexParent+1); // Удаляем родительский блок этого контента
+                    }
+                }
+            }
+        }
+
+        // Алгорим 'В избранном' / 'В избранное' (удаление из избранного)
+        for (let btn of btnsOperCompletedFavouriteDel) {
+            btn.onclick = () => {
+                parentBlock = btn.closest('.do_block');
+                contentFavouriteDel = parentBlock.querySelector('.title_do').textContent;
+                
+                // Пользователь нажал 'В избранном'
+                if (btn.classList.contains('favourited')) {
+                    btn.classList.remove('favourited');
+                    btn.innerHTML = 'В избранное';
+
+                    addToCompletedFavouriteDel(contentFavouriteDel, parentBlock);
+
+                    if (completed['favourite_del'].length > 0) {
+                        popupSave.classList.add('show');
+                    }
+                }
+                else { // Пользователь нажал 'В избранное'
+                    btn.classList.add('favourited');
+                    btn.innerHTML = 'В избранном';
+
+                    indexContent = completed['favourite_del'].indexOf(contentFavouriteDel);
+                    indexParent = completed['html'].indexOf(parentBlock);
+                    if (indexContent != -1) {
+                        completed['favourite_del'].splice(indexContent, indexContent+1); // Удаляем элемент из списка выполненных
+                        completed['html'].splice(indexParent, indexParent+1); // Удаляем родительский блок этого контента
+                    }
+                }
+            }
+        }
+
+        
+        const applyChanges = document.querySelector("#save_all_do"); // Кнопка попапа при нажатии на которую мы будем применять изменения
+        const cancelChanges = document.querySelector("#cancel_all_do"); // Кнопка попапа при нажатии на которую мы будем отменять изменения
+
+        // Функция улёта попапа обратно наверх
+        function resetPopup() {
+            setTimeout(function(){
+                console.log('fdsfdsaf')
+                popupSave.classList.remove("show");
+                chagePopupToApply();
+                applyChanges.innerHTML = 'Применить';
+                for (let block of completed['html']) {
+                    block.remove();
+                }
+                window.location.reload();
+            }, 500)
+        }
+
+        // При нажатии на кнопку сохранения - отправляем xhr-запрос на сервер
+        applyChanges.onclick = () => {
+            // AJAX - запрос на сервер с выполненными заданиями
+            const xhr = new XMLHttpRequest();
+            let requestUrl = "{% url 'get_data_from_ajax' %}"
+            console.log(requestUrl);
+
+            xhr.responseType = 'json';
+
+            xhr.open('post', requestUrl);
+            xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            
+            xhr.onload = () => {
+                console.log(xhr.response);
+            }
+            
+            xhr.send(JSON.stringify(completed));
+
+            applyChanges.innerHTML = 'Применено!';
+            changePopupToActive();
+
+            resetPopup();
+        }
+
+        // При нажатии на кнопку отмены - всё обнуляем
+        cancelChanges.onclick = () => {
+            cancelChanges.innerHTML = 'Отменено!';
+            
+            window.location.reload();
+        }
+
+    </script>
+
+    <script>
+        const menuBurger = document.querySelector("#burger");
+        const menu = document.querySelector(".sidebar");
+        const closeBurger = document.querySelector(".content_menu #close");
+
+        let active = false;
+
+        // Функция которая навесит на бургер и меню 'активные' классы
+        function goActive() {
+            menuBurger.classList.add('active');
+            menu.classList.add('show');
+            active = true;
+        }
+
+        // Функция которая уберёт с бургера и меню 'активные классы'
+        function goDefault() {
+            menuBurger.classList.remove('active');
+            menu.classList.remove('show');
+            active = false;
+        }
+
+        // При нажатии на бургер
+        menuBurger.onclick = () => {
+            if (!menuBurger.classList.contains('active')) {
+                goActive(); // Делаем всё активным, если до этого было не активным
+            }
+            else if (active==true) {
+                goDefault();
+            }
+        }
+    
+        // При нажатии на крестик
+        closeBurger.onclick = () => {
+            if (active){
+                goDefault();
+            }
+        }
+
+        // document.onclick = (event) => {
+        //     if (event.target != menuBurger && active) {
+        //         goDefault();
+        //     }
+        // }
+    </script>
+
+    <script>
+        let allTitlesSideBar = document.querySelectorAll(".sidebar .title_links_block h3");
+        let menuParent = document.querySelector(".menu_links_blocks");
+
+        for (let title of allTitlesSideBar) {
+            title.addEventListener("click", function() {
+                parentBlockLinks = title.closest(".links_block");
+
+                if (parentBlockLinks.classList.contains("hidden")) {
+                    parentBlockLinks.classList.remove("hidden");
+                    parentBlockLinks.classList.add("default");
+
+                    // if (menuParent.clientHeight > window.innerHeight - 300) {
+                    //     menuParent.style.height = (window.innerHeight - 100) + "px";
+                    //     menuParent.style.overflowY = "scroll";
+                    // }  
+                }
+                else {
+                    parentBlockLinks.classList.add("hidden");
+                    parentBlockLinks.classList.remove("default");
+                }
+
+                
+            })
+        }
+
+    </script>
+</body>
+</html>

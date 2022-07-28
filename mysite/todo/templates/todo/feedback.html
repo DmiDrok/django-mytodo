@@ -1,0 +1,47 @@
+{% extends 'todo/base.html' %}
+
+{% block content %}
+<div class="feedback_global_block">
+    <div class="feedback_title_block">
+        <h3>Обратная связь:</h3>
+    </div>
+
+    {% if messages %}
+        <div class="flashed_messages">
+            {% for msg in messages %}
+                <p class="{{ msg.tags }}">
+                    {{ msg }}
+                </p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="feedback_form_block">
+        <form action="{% url 'feedback' %}" method="post">
+            {% csrf_token %}
+
+            {% for f in form %}
+                {% if not f.errors %}
+                    <div class="feedback_form_block_inp {% if f.name == 'captcha' %} captcha_inp {% endif %}">
+                        <label for="{{ f.id_for_label }}">{{ f.label }}:</label>
+                        {{ f }}
+                    </div>
+                {% else %}
+                    <div class="feedback_form_block_inp error {% if f.name == 'captcha' %} captcha_inp {% endif %}">
+                        <label for="{{ f.id_for_label }}">{{ f.label }}:</label>
+                        {{ f }}
+
+                        <div class="errors_input_block">
+                            {% for error in f.errors %}
+                                <span class="error">* {{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <button type="submit" id="send_feedback_mail">Отправить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

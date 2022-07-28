@@ -1,0 +1,85 @@
+<div class="do_everything">
+    <div class="title_do_everything">
+        {% if category %}
+            <h3>Все задания по категории '<u>{{ category }}</u>':</h3>
+        {% elif completed %}
+            <h3>Все выполненные задания:<h3>
+        {% elif favourites %}
+            <h3>Все избранные задания:</h3>
+        {% else %}
+            <h3>Все задания:</h3>
+        {% endif %}
+    </div>
+
+    {% if all_do %}
+        <div class="all_do">
+
+            {% for do in all_do %}
+                <div class="do_block">
+                    <div class="img_do_block">
+                        <img src="{{ do.photo.url }}">
+                    </div>
+
+                    <div class="text_do_block">
+                        <div class="about_do">
+                            <h3 class="title_do">{{ do.title }}</h3>
+                            <p class="category_do">{{ do.category.name }}<p>
+                            <p class="date_do">Создано: {{ do.create_at | date:'Y-m-d H:i' }}</p>
+                        </div>
+
+                        <div class="operations_do">
+                            <div class="do_tasks">
+                                <button id="del" class="operation task">Удалить</button>
+                                {% if do.is_favourite %}
+                                    <button id="favourite" class="operation task favourited">В избранном</button>
+                                {% else %}
+                                    <button id="favourite" class="operation task">В избранное</button>
+                                {% endif %}
+                                {% if completed %}
+                                    <button id="return" class="operation task">Вернуть</button>
+                                {% endif %}
+                            </div>
+
+                            <button class="do_complete operation">Выполнить</button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="all_do_not_found">
+            {% if category %}
+                <h3>Кажется, задания по категории '<u>{{ category }}</u>' отсутствуют.</h3>
+            {% elif completed %}
+                <h3>Кажется, выполненные задания отсутствуют.</h3>
+            {% elif favourites %}
+                <h3>Кажется, избранные задания отсутствуют.</h3>
+            {% else %}
+                <h3>Кажется, задания отсутствуют.</h3>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if page_obj.has_other_pages %}
+        <div class="paginate_pages">
+            {% for p in page_obj.paginator.page_range %}
+                {% if page_obj.number == p %}
+                    <a href="?page={{ p }}" class="active">{{ p }}<a/>
+                {% else %}
+                    <a href="?page={{ p }}">{{ p }}<a/>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+
+<div class="content_popup">
+    <h3 class="title_popup">Применить изменения?</h3>
+    <p class="text_popup">Выберите один из вариантов снизу и нажмите на него.</p>
+
+    <div class="buttons_to_tasks">
+        <button id="cancel_all_do">Отменить</button>
+        <button id="save_all_do">Применить</button>
+    </div>
+</div>

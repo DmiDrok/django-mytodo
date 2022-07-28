@@ -1,0 +1,65 @@
+{% extends 'todo/base.html' %}
+
+{% block content %}
+<div class="profile_global_block">
+    <div class="title_profile_block">
+        <h3>Мой профиль</h3>
+    </div>
+
+    <div class="profile_user_info">
+        <div class="avatar_and_info">
+            <div class="avatar_here">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}">
+                {% else %}
+                    {% load static %}
+                    <img src="{% static 'todo/images/default_avatar.jpg' %}">
+                {% endif %}
+            </div>
+
+            <div class="info_here">
+                <div class="title_info">
+                    <h4>Данные:</h4>
+                </div>
+
+                <div class="user_info">
+                    <p>Логин: <u>{{ request.user.username }}</u></p>
+                    <p>Почта: <u>{{ request.user.email }}</u></p>
+                </div>
+            </div>
+
+            <div class="bio_here">
+                <div class="title_bio">
+                    <h4>О себе:</h4>
+                </div>
+
+                <div class="user_bio">
+                    {{ profile_bio | linebreaks }}
+                </div>
+            </div>
+        </div>
+
+        <div class="change_avatar_bio">
+            <form action="{% url 'profile' request.user.username %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% for f in form %}
+                    <div class="profile_input_block">
+                        <div class="content_profile_input_block">
+                            <label for="{{ f.id_for_label }}">{{ f.label }}:</label>
+                            <div class="input_profile">
+                                {{ f }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <br>
+                <div>
+                    <button type="submit" id="accept_new_avatar_bio_btn">Изменить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

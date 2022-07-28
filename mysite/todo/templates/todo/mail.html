@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8">
+
+        <style>
+            #mail_body {
+                height: 100vh;
+                display: grid;
+                background-color: #F8F8FA;
+            }
+            
+            .mail_content {
+                width: 60%;
+                padding: 2rem;
+                border: 2px solid #000;
+                justify-self: center;
+                align-self: center;
+                box-shadow: 0 0 5px 7px rgba(150, 150, 150, .3);
+                border-radius: 3px;
+                background-color: #fff;
+            }
+            
+            .mail_content .bottom_content {
+                margin-top: 2rem;
+            }
+            
+            .title_content {
+                padding-bottom: 1rem;
+            }
+            
+            .message_content_mail {
+                padding-top: 1rem;
+                border-top: 2px solid #000;
+            }
+        </style>
+    </head>
+
+    <body id="mail_body">
+        <section class="mail_content">
+            <div class="top_content">
+                <div class="title_mail">
+                    <h1><u>Письмо от сервиса 'Todo-шник'</u></h1>
+                </div>
+            
+                <div class="info_mail">
+                    <h3>Пользователь: <u>{{ request.user.username }}</u></h3>
+                    <h3>Почта пользователя: <u>{{ request.user.email }}</u><h3>
+                    <h3>Категория: <u>{% if category == 'error_msg' %}Сообщение об ошибке{% elif category == 'update_msg' %}Предложение по улучшению{% else %}Другое{% endif %}</u></h3>
+                </div>
+            </div>
+            
+            <div class="bottom_content">
+                <div class="title_content">
+                    <h3>Содержимое:</h3>
+                </div>
+
+                <div class="message_content_mail">
+                    {{ content | linebreaks }}
+                </div>
+            </div>
+        </section>
+    </body>
+</html>
