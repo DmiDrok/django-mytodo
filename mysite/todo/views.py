@@ -1,14 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponse, Http404
-from django.urls import reverse_lazy
+from django.http import JsonResponse, Http404
 from django.views.generic.base import TemplateView, View
+from django.views.generic import ListView
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.core.paginator import Paginator
-from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -24,17 +22,24 @@ import json
 
 
 # Представление для главной страницы
-class IndexView(DataMixin, LoginRequiredMixin, TemplateView):
+class IndexView(DataMixin, LoginRequiredMixin, ListView):
+    model = Do
+    context_object_name = 'all_do'
     template_name = 'todo/index.html'
     http_method_names = ['get', 'post']
 
     # Изменение контекста в шаблоне
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs)
-        c_mixin = self.get_user_context(title='Главная страница', all_do=Do.objects.filter(is_completed=False, user=self.request.user).order_by('-create_at'), active_path='index', active_category='pages')
+        c_mixin = self.get_user_context(title='Главная страница', active_path='index', active_category='pages')
         context.update(c_mixin)
 
         return context
+
+    # Формирование выборки из БД
+    def get_queryset(self):
+        return Do.objects.filter(is_completed=False, user=self.request.user).order_by('-create_at')
 
     # Действия при методе, которое не определено в http_method_names
     def http_method_not_allowed(self, request, *args, **kwargs):
@@ -96,49 +101,68 @@ class DoView(DataMixin, LoginRequiredMixin, TemplateView):
 
 
 # Представление для страницы категории
-class CategoryView(DataMixin, LoginRequiredMixin, TemplateView):
+class CategoryView(DataMixin, LoginRequiredMixin, ListView):
+    model = Do
+    context_object_name = 'all_do'
     template_name = 'todo/category.html'
 
+    # Изменение контекста в шаблоне
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        c_mixin = self.get_user_context(title='Задания по категориям', all_do=Do.objects.filter(category__slug=kwargs['slug'], is_completed=False, user=self.request.user).order_by('-create_at'), active_cat_slug=kwargs['slug'], active_category='cats')
+        c_mixin = self.get_user_context(title='Задания по категориям', active_cat_slug=self.kwargs['slug'], active_category='cats')
         context.update(c_mixin)
 
         # Если длина сформированной коллекции наших заданий больше 0 - то берём категорию из элемента с индексом 0
         if len(context['all_do']):
             context['category'] = context['all_do'][0].category.name
         else:
-            context['category'] = Category.objects.get(slug=kwargs['slug'])
+            context['category'] = Category.objects.get(slug=self.kwargs['slug'])
 
         return context
 
+    # Формирование выборки из БД
+    def get_queryset(self):
+        return Do.objects.filter(category__slug=self.kwargs['slug'], is_completed=False, user=self.request.user).order_by('-create_at')
+
 
 # Представление для страницы выполненных заданий
-class CompletedView(DataMixin, LoginRequiredMixin, TemplateView):
+class CompletedView(DataMixin, LoginRequiredMixin, ListView):
+    model = Do
+    context_object_name = 'all_do'
     template_name = 'todo/completed_do.html'
 
     # Изменение контекста в шаблоне
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        c_mixin = self.get_user_context(title='Выполненные задания', all_do=Do.objects.filter(is_completed=True, user=self.request.user).order_by('create_at'), active_path='completed', active_category='other')
+        c_mixin = self.get_user_context(title='Выполненные задания', active_path='completed', active_category='other')
         context.update(c_mixin)
         context['completed'] = 'Все выполненные задания'
 
         return context
 
+    # Формирование выборки из БД
+    def get_queryset(self):
+        return Do.objects.filter(is_completed=True, user=self.request.user).order_by('-create_at')
+
 
 # Представление для страницы избранных заданий
-class FavouritesView(DataMixin, LoginRequiredMixin, TemplateView):
+class FavouritesView(DataMixin, LoginRequiredMixin, ListView):
+    model = Do
+    context_object_name = 'all_do'
     template_name = 'todo/favourites.html'
 
     # Изменение контекста в шаблоне
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        c_mixin = self.get_user_context(title='Избранные задания', all_do=Do.objects.filter(is_favourite=True, is_completed=False, user=self.request.user).order_by('-add_to_favourite_at'), active_path='favourites', active_category='other')
+        c_mixin = self.get_user_context(title='Избранные задания', active_path='favourites', active_category='other')
         context.update(c_mixin)
         context['favourites'] = 'Все избранные задания'
 
         return context
+
+    # Формирование выборки из БД
+    def get_queryset(self):
+        return Do.objects.filter(is_favourite=True, is_completed=False, user=self.request.user).order_by('-add_to_favourite_at')
 
 
 # Представление для страницы регистрации с её обработкой   
@@ -214,7 +238,7 @@ class LoginUserView(DataMixin, TemplateView):
             elif not user_obj: # Если пользователь не был найден (его нет на сайте) - предупреждаем пользователя об этом
                 messages.add_message(request, messages.ERROR, 'Такого пользователя нет на сайте!')
             else:
-                messages.add_message(request, messages.SUCCESS, 'Проверьте корректность введённых данных!')
+                messages.add_message(request, messages.ERROR, 'Проверьте корректность введённых данных!')
         else:
             messages.add_message(request, messages.ERROR, 'Ошибка при авторизации.')
 
@@ -258,7 +282,7 @@ class ProfileUserView(DataMixin, LoginRequiredMixin, TemplateView):
 
         if form.is_valid():
             # Profile.objects.get(user=request.user).delete()
-
+            # Всё закоменченное - заменяет параметр instance у формы (это крайне полезная штука!)
             # response = form.save(commit=False)
             # response.user = request.user
             # response.save()
@@ -292,13 +316,13 @@ class FeedbackView(DataMixin, LoginRequiredMixin, TemplateView):
         if form.is_valid():
             content = form.cleaned_data['content']
             category = form.cleaned_data['category']
-            html_message = render_to_string('todo/mail.html', context={'category': category, 'content': content}) # HTML который мы будем отправлять на почту
+            html_message = render_to_string('todo/mail.html', context={'user': self.request.user, 'category': category, 'content': content}) # HTML который мы будем отправлять на почту
             plain_message = strip_tags(html_message) # Обычный текст из html без тегов
 
-            print(settings.EMAIL_HOST_USER)
-            mail = send_mail(f'Письмо Todo-шника [{category}]', 
-                            from_email=settings.EMAIL_HOST_USER,
+            mail = send_mail(
+                            subject=f'Письмо Todo-шника [{category}]', 
                             message=plain_message, 
+                            from_email=settings.EMAIL_HOST_USER,
                             recipient_list=['drobkov155099@gmail.com'], 
                             fail_silently=False,
                             html_message=html_message,

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'captcha',
+    # 'social_django',
     'todo.apps.TodoConfig',
 ]
 
@@ -64,6 +65,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # 'social_django.context_processors.backends',
+                # 'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -137,14 +140,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Настройки капчи
 CAPTCHA_BACKGROUND_COLOR = '#000'
 CAPTCHA_FOREGROUND_COLOR = '#fff'
+CAPTCHA_LENGTH = 6
 
-
-from config import email_user, email_password
 
 # Настройки SMTP
+from config import email_user, email_password
+
 EMAIL_HOST = 'smtp.mail.ru'
 EMAIL_HOST_USER = email_user
 EMAIL_HOST_PASSWORD = email_password
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
 EMAIL_USE_TLS = False
+
+# Настройки авторизации
+# from config import vk_id, vk_secret
+
+# AUTHENTICATION_BACKENDS = [
+#     'social_core.backends.vk.VKOAuth2',
+#     'django.contrib.auth.backends.ModelBackend',
+# ]
+
+# SOCIAL_AUTH_VK_OAUTH2_KEY = vk_id
+# SOCIAL_AUTH_VK_OAUTH2_SECRET = vk_secret
+# SOCIAL_AUTH_VK_OAUTH2_SCOPE = ['email']
+# SOCIAL_AUTH_VK_APP_USER_MODE = 0

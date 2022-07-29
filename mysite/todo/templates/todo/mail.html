@@ -44,8 +44,8 @@
                 </div>
             
                 <div class="info_mail">
-                    <h3>Пользователь: <u>{{ request.user.username }}</u></h3>
-                    <h3>Почта пользователя: <u>{{ request.user.email }}</u><h3>
+                    <h3>Пользователь: <u>{{ user.username }}</u></h3>
+                    <h3>Почта пользователя: <u>{{ user.email }}</u><h3>
                     <h3>Категория: <u>{% if category == 'error_msg' %}Сообщение об ошибке{% elif category == 'update_msg' %}Предложение по улучшению{% else %}Другое{% endif %}</u></h3>
                 </div>
             </div>
